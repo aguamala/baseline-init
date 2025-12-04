@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/manifoldco/promptui"
 )
 
 // Generator handles creation of compliance files
@@ -61,7 +62,7 @@ func (g *Generator) GenerateDefaults() error {
 // GenerateWithConfig generates files with provided configuration
 func (g *Generator) GenerateWithConfig(config *Config) error {
 	green := color.New(color.FgGreen).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
+	cyan := color.New(color.FgCyan).SprintFunc()
 
 	// Ensure .github directory exists
 	githubDir := filepath.Join(g.repoPath, ".github")
@@ -72,7 +73,22 @@ func (g *Generator) GenerateWithConfig(config *Config) error {
 	// Generate SECURITY-INSIGHTS.yml
 	siPath := filepath.Join(g.repoPath, "SECURITY-INSIGHTS.yml")
 	if _, err := os.Stat(siPath); err == nil && !g.force {
-		fmt.Printf("%s SECURITY-INSIGHTS.yml already exists (use --force to overwrite)\n", yellow("⚠"))
+		action, err := g.promptForOverwrite("SECURITY-INSIGHTS.yml")
+		if err != nil {
+			return err
+		}
+
+		switch action {
+		case "skip":
+			fmt.Printf("%s Skipped SECURITY-INSIGHTS.yml\n", cyan("→"))
+		case "overwrite":
+			if err := g.generateSecurityInsights(siPath, config); err != nil {
+				return fmt.Errorf("failed to generate SECURITY-INSIGHTS.yml: %w", err)
+			}
+			fmt.Printf("%s Generated SECURITY-INSIGHTS.yml\n", green("✓"))
+		case "cancel":
+			return fmt.Errorf("setup cancelled by user")
+		}
 	} else {
 		if err := g.generateSecurityInsights(siPath, config); err != nil {
 			return fmt.Errorf("failed to generate SECURITY-INSIGHTS.yml: %w", err)
@@ -83,7 +99,22 @@ func (g *Generator) GenerateWithConfig(config *Config) error {
 	// Generate SECURITY.md if it doesn't exist
 	securityMdPath := filepath.Join(g.repoPath, "SECURITY.md")
 	if _, err := os.Stat(securityMdPath); err == nil && !g.force {
-		fmt.Printf("%s SECURITY.md already exists (use --force to overwrite)\n", yellow("⚠"))
+		action, err := g.promptForOverwrite("SECURITY.md")
+		if err != nil {
+			return err
+		}
+
+		switch action {
+		case "skip":
+			fmt.Printf("%s Skipped SECURITY.md\n", cyan("→"))
+		case "overwrite":
+			if err := g.generateSecurityMd(securityMdPath, config); err != nil {
+				return fmt.Errorf("failed to generate SECURITY.md: %w", err)
+			}
+			fmt.Printf("%s Generated SECURITY.md\n", green("✓"))
+		case "cancel":
+			return fmt.Errorf("setup cancelled by user")
+		}
 	} else {
 		if err := g.generateSecurityMd(securityMdPath, config); err != nil {
 			return fmt.Errorf("failed to generate SECURITY.md: %w", err)
@@ -243,4 +274,39 @@ func formatDistributionPoints(points []string) string {
 		result += fmt.Sprintf("  - %s\n", p)
 	}
 	return result[:len(result)-1] // Remove trailing newline
+}
+
+// promptForOverwrite prompts user for action when file exists
+// Returns: "overwrite", "skip", or "cancel"
+func (g *Generator) promptForOverwrite(filename string) (string, error) {
+	yellow := color.New(color.FgYellow).SprintFunc()
+
+	fmt.Printf("\n%s %s already exists\n", yellow("⚠"), filename)
+	fmt.Println("\nThis file may contain customized security information.")
+	fmt.Println("\nTo bypass this prompt in the future, use: baseline-init setup --force")
+
+	prompt := promptui.Select{
+		Label: "How would you like to proceed?",
+		Items: []string{
+			"Overwrite existing file (current values will be lost)",
+			"Skip and keep existing file",
+			"Cancel setup",
+		},
+	}
+
+	_, result, err := prompt.Run()
+	if err != nil {
+		return "cancel", fmt.Errorf("prompt cancelled: %w", err)
+	}
+
+	switch result {
+	case "Overwrite existing file (current values will be lost)":
+		return "overwrite", nil
+	case "Skip and keep existing file":
+		return "skip", nil
+	case "Cancel setup":
+		return "cancel", nil
+	default:
+		return "cancel", fmt.Errorf("unknown selection")
+	}
 }

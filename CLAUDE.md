@@ -140,7 +140,9 @@ To add new output formats, add a new `output*()` method and update the switch st
 - Creates SECURITY-INSIGHTS.yml (schema 2.0.0) and SECURITY.md
 - Has two modes: auto (with defaults) and custom (with user config)
 - Uses `Config` struct to pass parameters between packages
-- Respects `force` flag to overwrite existing files
+- **Overwrite protection**: Prompts user before overwriting existing files (unless `--force` is used)
+- Prompt options: Overwrite, Skip, or Cancel
+- Uses `promptui.Select` for interactive file overwrite decisions
 
 ### `pkg/validator`
 - Validates YAML syntax and schema compliance

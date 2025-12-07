@@ -78,7 +78,7 @@ jobs:
         env:
            GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-            snappy snap --spec snappy/specs/mfa.yaml -v ORG=${{ github.event.repository.owner.login }} -v COMMIT=${{ github.event.head_commit }} -v REPO=${{ github.event.repository.name }} --attest > attestations/mfa.intoto.json
+            snappy snap --spec snappy/specs/mfa.yaml -v ORG=${{ github.event.repository.owner.login }} -v COMMIT=${{ github.event.head_commit.id }} -v REPO=${{ github.event.repository.name }} --attest > attestations/mfa.intoto.json
             bnd statement attestations/mfa.intoto.json --out attestations/mfa.bundle.json
             rm -f attestations/mfa.intoto.json
         id: attest-mfa

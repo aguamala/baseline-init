@@ -78,7 +78,7 @@ jobs:
         env:
            GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-            snappy snap builtin:github/mfa.yaml -v ORG=${{ github.event.repository.owner.login }} --attest > attestations/mfa.intoto.json
+            snappy snap --spec snappy/specs/mfa.yaml -v ORG=${{ github.event.repository.owner.login }} --attest > attestations/mfa.intoto.json
             bnd statement attestations/mfa.intoto.json --out attestations/mfa.bundle.json
             rm -f attestations/mfa.intoto.json
         id: attest-mfa
@@ -165,6 +165,7 @@ jobs:
         with:
           subject: sha1:${{ github.sha }}
           collector: "jsonl:attestations.jsonl"
-          policy: "git+https://github.com/carabiner-dev/policies#sets/baseline/osps-baseline.policy.json"
+          #policy: "git+https://github.com/carabiner-dev/policies#sets/baseline/osps-baseline.policy.json"
+          policy: "git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline.policy.json"
           attest: true
           fail: false

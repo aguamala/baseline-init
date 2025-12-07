@@ -73,58 +73,115 @@ jobs:
         run: |
           bnd commit --predicate-git-path=SECURITY-INSIGHTS.yml --type=https://github.com/ossf/security-insights-spec --yaml --repo . > attestations/si.bundle.json
           
-
       - name: Generate MFA attestation
         env:
            GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-            snappy snap --spec snappy/specs/mfa.yaml -v ORG=${{ github.event.repository.owner.login }} -v COMMIT=${{ github.event.head_commit.id }} -v REPO=${{ github.event.repository.name }} --attest > attestations/mfa.intoto.json
-            bnd statement attestations/mfa.intoto.json --out attestations/mfa.bundle.json
-            rm -f attestations/mfa.intoto.json
-        id: attest-mfa
-  
+            snappy snap \
+              --spec snappy/specs/mfa.yaml \
+              -v ORG=${{ github.event.repository.owner.login }} \
+              -v COMMIT=${{ github.sha }} \
+              -v REPO=${{ github.event.repository.name }} \
+              > attestations/mfa.predicate.json
+
+            bnd commit \
+              --repo=https://github.com/${{ github.repository }} \
+              --sha=${{ github.sha }} \
+              --predicate=attestations/mfa.predicate.json \
+              --type="http://github.com/carabiner-dev/snappy/specs/mfa.yaml" \
+              --out=attestations/mfa.bundle.json
+
+            rm -f attestations/mfa.predicate.json
+        id: attest-mfa 
+
       - if: github.event.organization.login != ''
         name: Generate org attestation
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          snappy snap builtin:github/org.yaml -v BRANCH=main -v REPO=${{ github.event.repository.name }} -v ORG=${{ github.event.organization.login }} --attest > attestations/org.intoto.json
-          bnd statement attestations/org.intoto.json --out attestations/org.bundle.json
-          rm -f attestations/org.intoto.json
+          snappy snap builtin:github/org.yaml \
+            -v BRANCH=main \
+            -v REPO=${{ github.event.repository.name }} \
+            -v ORG=${{ github.event.organization.login }} \
+            > attestations/org.predicate.json
+          
+          bnd commit \
+            --repo=https://github.com/${{ github.repository }} \
+            --sha=${{ github.sha }} \
+            --predicate=attestations/org.predicate.json \
+            --type="http://github.com/carabiner-dev/snappy/specs/org.yaml" \
+            --out=attestations/org.bundle.json
+
+          rm -f attestations/org.predicate.json
         id: attest-org
 
-      # - name: Generate branch rules attestation
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     snappy snap builtin:github/branch-rules.yaml -v BRANCH=main -v REPO=${{ github.event.repository.name }} -v ORG=${{ github.event.repository.owner.login }} --attest > attestations/branch.intoto.json
-      #     bnd statement attestations/branch.intoto.json --out attestations/branch.bundle.json
-      #     rm -f attestations/branch.intoto.json
-      #   id: attest-branch
+      - name: Generate branch rules attestation
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          snappy snap builtin:github/branch-rules.yaml \
+            -v BRANCH=main \
+            -v REPO=${{ github.event.repository.name }} \
+            -v ORG=${{ github.event.repository.owner.login }} \
+            > attestations/branch.predicate.json
+          
+          bnd commit \
+            --repo=https://github.com/${{ github.repository }} \
+            --sha=${{ github.sha }} \
+            --predicate=attestations/branch.predicate.json \
+            --type="http://github.com/carabiner-dev/snappy/specs/branch-rules.yaml" \
+            --out=attestations/branch.bundle.json
 
-      # - name: Generate repository attestation
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     snappy snap builtin:github/repo.yaml -v BRANCH=main -v REPO=${{ github.event.repository.name }} -v ORG=${{ github.event.repository.owner.login }} --attest > attestations/repo.intoto.json
-      #     bnd statement attestations/repo.intoto.json --out attestations/repo.bundle.json
-      #     rm -f attestations/repo.intoto.json
-      #   id: attest-repo
+          rm -f attestations/branch.predicate.json
+        id: attest-branch
+
+      - name: Generate repository attestation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          snappy snap builtin:github/repo.yaml \
+            -v BRANCH=main \
+            -v REPO=${{ github.event.repository.name }} \
+            -v ORG=${{ github.event.repository.owner.login }} \
+            > attestations/repo.predicate.json
+
+          bnd commit \
+            --repo=https://github.com/${{ github.repository }} \
+            --sha=${{ github.sha }} \
+            --predicate=attestations/repo.predicate.json \
+            --type="http://github.com/carabiner-dev/snappy/specs/repo.yaml" \
+            --out=attestations/repo.bundle.json
+
+          rm -f attestations/repo.predicate.json
+        id: attest-repo
 
       # - name: "Generate Scorecard Attestation"
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #   run: |
-      #     scorecard --repo=carabiner-dev/demo-repo  --format=intoto  > attestations/scorecard.intoto.json
-      #     bnd statement attestations/scorecard.intoto.json --out attestations/scorecard.bundle.json          
+      #     scorecard \
+      #       --repo=carabiner-dev/demo-repo \
+      #       --format=intoto \
+      #       > attestations/scorecard.intoto.json
+
+      #     bnd statement \
+      #       attestations/scorecard.intoto.json \
+      #       --out attestations/scorecard.bundle.json
+
       #     rm -f attestations/scorecard.intoto.json
 
       # - name: Attest tests
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #   run: |
-      #     beaker run . --attest -o attestations/tests.intoto.json
-      #     bnd statement attestations/tests.intoto.json --out attestations/tests.bundle.json
+      #     beaker run . \
+      #       --attest \
+      #       -o attestations/tests.intoto.json
+
+      #     bnd statement \
+      #       attestations/tests.intoto.json \
+      #       --out attestations/tests.bundle.json
+
       #     rm -f attestations/tests.intoto.json
       #   id: attest-tests
 
@@ -141,10 +198,23 @@ jobs:
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #   run: |
-      #     vexflow assemble --repo=${{ github.repository }} --triage-repo=${{ github.event.repository.owner.login }}/.vexflow  > attestations/main.openvex.json
-      #     bnd predicate attestations/main.openvex.json --subject=sha1:${{ github.sha }} --out attestations/openvex.bundle.json --type="https://openvex.dev/ns/v0.2.0"        
-          
-      #     bnd predicate attestations/osv-results.json --subject=sha1:${{ github.sha }} --out attestations/osv-results.bundle.json --type="https://ossf.github.io/osv-schema/results@v1.6.7"        
+      #     vexflow assemble \
+      #       --repo=${{ github.repository }} \
+      #       --triage-repo=${{ github.event.repository.owner.login }}/.vexflow \
+      #       > attestations/main.openvex.json
+
+      #     bnd predicate \
+      #       attestations/main.openvex.json \
+      #       --subject=sha1:${{ github.sha }} \
+      #       --out attestations/openvex.bundle.json \
+      #       --type="https://openvex.dev/ns/v0.2.0"
+
+      #     bnd predicate \
+      #       attestations/osv-results.json \
+      #       --subject=sha1:${{ github.sha }} \
+      #       --out attestations/osv-results.bundle.json \
+      #       --type="https://ossf.github.io/osv-schema/results@v1.6.7"
+
       #     rm -f attestations/osv-results.json attestations/main.openvex.json
 
       - name: Pack Attestations

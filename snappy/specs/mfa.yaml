@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: Copyright 2025 Carabiner Systems, Inc
 # SPDX-License-Identifier: Apache-2.0
 ---
-id: ${COMMIT}
-name: gitCommit:${COMMIT}
-url: git+https://github.com/${ORG}/${REPO}@${COMMIT}
+id: github.com/${ORG}
+name: github.com/${ORG}
+url: https://api.github.com/orgs/${ORG}/members
 type: http://github.com/carabiner-dev/snappy/specs/mfa.yaml
 endpoint: orgs/${ORG}/members?filter=2fa_disabled&per_page=100
 method: GET

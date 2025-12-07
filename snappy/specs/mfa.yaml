@@ -3,7 +3,7 @@
 ---
 id: ${COMMIT}
 name: gitCommit:${COMMIT}
-url: https://api.github.com/orgs/${ORG}/members
+url: git+https://github.com/${ORG}/${REPO}@${COMMIT}
 type: http://github.com/carabiner-dev/snappy/specs/mfa.yaml
 endpoint: orgs/${ORG}/members?filter=2fa_disabled&per_page=100
 method: GET

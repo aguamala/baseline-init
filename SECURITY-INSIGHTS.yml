@@ -21,6 +21,7 @@ project:
   vulnerability-reporting:
     reports-accepted: true
     bug-bounty-available: false
+  repositories: []
 
 repository:
   url: https://github.com/aguamala/baseline-init

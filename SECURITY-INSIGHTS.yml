@@ -44,6 +44,8 @@ repository:
   license:
     url: https://github.com/aguamala/baseline-init/blob/main/LICENSE
     expression: Apache-2.0
+  documentation:
+    dependency-management-policy: "https://github.com/aguamala/baseline-init/blob/main/SECURITY.md"
   security:
     assessments:
       self:

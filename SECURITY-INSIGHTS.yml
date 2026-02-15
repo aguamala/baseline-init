@@ -21,6 +21,10 @@ project:
   vulnerability-reporting:
     reports-accepted: true
     bug-bounty-available: false
+    contact:
+      - name: deobieta
+        email: deobieta@gmail.com
+        primary: true
   repositories: []
   documentation:
     detailed-guide: "https://github.com/aguamala/baseline-init/blob/main/README.md"

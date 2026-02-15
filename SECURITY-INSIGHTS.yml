@@ -22,6 +22,8 @@ project:
     reports-accepted: true
     bug-bounty-available: false
   repositories: []
+  documentation:
+    detailed-guide: "https://github.com/aguamala/baseline-init/blob/main/README.md"
 
 repository:
   url: https://github.com/aguamala/baseline-init

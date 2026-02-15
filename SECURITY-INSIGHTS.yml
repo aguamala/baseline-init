@@ -28,6 +28,7 @@ project:
   repositories: []
   documentation:
     detailed-guide: "https://github.com/aguamala/baseline-init/blob/main/README.md"
+    signature-verification: "https://github.com/aguamala/baseline-init/blob/main/README.md#verifying-signatures"
 
 repository:
   url: https://github.com/aguamala/baseline-init

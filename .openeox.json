@@ -1,0 +1,14 @@
+{
+  "@context": "https://docs.oasis-open.org/openeox/core/v1.0",
+  "@type": "OpenEoX",
+  "product": {
+    "name": "baseline-init",
+    "repository": "https://github.com/aguamala/baseline-init"
+  },
+  "support": {
+    "active": {
+      "until": "2027-01-01"
+    },
+    "eol": "2027-06-01"
+  }
+}

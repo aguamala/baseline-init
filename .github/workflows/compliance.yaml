@@ -62,8 +62,8 @@
         - name: Generate SBOM
           run: |
             mkdir attestations
-            unpack extract . --ignore-other-codebases -f spdx --attest > attestations/spdx.intoto.json
-            unpack extract . --ignore-other-codebases -f spdx > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
+            unpack extract . --ignore-other-codebases --files -f spdx --attest > attestations/spdx.intoto.json
+            unpack extract . --ignore-other-codebases --files -f spdx > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
             bnd statement attestations/spdx.intoto.json --out attestations/spdx.bundle.json
             rm -f attestations/spdx.intoto.json
        

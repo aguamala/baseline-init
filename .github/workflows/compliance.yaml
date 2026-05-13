@@ -164,17 +164,12 @@
               --format=json
               .
   
-        - name: "Assemble VEX and attest OSV results"
+        - name: "Attest VEX and OSV results"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            vexflow assemble \
-              --repo=${{ github.repository }} \
-              --triage-repo=${{ github.event.repository.owner.login }}/.vexflow \
-              > attestations/main.openvex.json
-  
             bnd predicate \
-              attestations/main.openvex.json \
+              .openvex.json \
               --subject=sha1:${{ github.sha }} \
               --out attestations/openvex.bundle.json \
               --type="https://openvex.dev/ns/v0.2.0"
@@ -185,7 +180,7 @@
               --out attestations/osv-results.bundle.json \
               --type="https://ossf.github.io/osv-schema/results@v1.6.7"
   
-            rm -f attestations/osv-results.json attestations/main.openvex.json
+            rm -f attestations/osv-results.json
   
         - name: Pack Attestations
           id: pack-attestations

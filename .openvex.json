@@ -1,0 +1,65 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/aguamala/baseline-init/blob/main/.openvex.json",
+  "author": "aguamala",
+  "timestamp": "2026-05-13T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {"name": "GO-2026-4918"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4971"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4976"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4977"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4980"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4981"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4982"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    },
+    {
+      "vulnerability": {"name": "GO-2026-4986"},
+      "products": [{"@id": "pkg:golang/github.com/aguamala/baseline-init"}],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "baseline-init is a CLI tool for scaffolding project files; it does not use the affected stdlib code paths."
+    }
+  ]
+}

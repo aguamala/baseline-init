@@ -1,6 +1,6 @@
 module github.com/aguamala/baseline-init
 
-go 1.24
+go 1.26.2
 
 require (
 	github.com/fatih/color v1.18.0

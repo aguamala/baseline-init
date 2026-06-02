@@ -168,19 +168,25 @@
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
+            vexflow assemble \
+              --repo aguamala/baseline-init \
+              --branch main \
+              --product "sha1:${{ github.sha }}" \
+              --out attestations/openvex.json
+
             bnd predicate \
-              .openvex.json \
-              --subject=sha1:${{ github.sha }} \
+              attestations/openvex.json \
+              --subject="sha1:${{ github.sha }}" \
               --out attestations/openvex.bundle.json \
               --type="https://openvex.dev/ns/v0.2.0"
-  
+
             bnd predicate \
               attestations/osv-results.json \
-              --subject=sha1:${{ github.sha }} \
+              --subject="sha1:${{ github.sha }}" \
               --out attestations/osv-results.bundle.json \
               --type="https://ossf.github.io/osv-schema/results@v1.6.7"
-  
-            rm -f attestations/osv-results.json
+
+            rm -f attestations/osv-results.json attestations/openvex.json
   
         - name: Pack Attestations
           id: pack-attestations

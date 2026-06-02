@@ -172,7 +172,7 @@
               --repo aguamala/baseline-init \
               --branch main \
               --product "sha1:${{ github.sha }}" \
-              --out attestations/openvex.json
+              > attestations/openvex.json
 
             bnd predicate \
               attestations/openvex.json \

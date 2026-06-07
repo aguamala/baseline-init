@@ -208,6 +208,6 @@
             subject: sha1:${{ github.sha }}
             collector: "jsonl:attestations.jsonl"
             #policy: "git+https://github.com/carabiner-dev/policies#sets/baseline/osps-baseline.policy.json"
-            policy: "git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline.policy.json"
+            policy: "git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline-chains.policy.json"
             attest: true
             fail: false

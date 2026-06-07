@@ -201,13 +201,27 @@
             name: attestations.jsonl
             path: attestations.jsonl
         
-        - uses: carabiner-dev/actions/ampel/verify@0ea03c7e668331be3038c6c4449e9131f142d366
-          name: Evaluate Compliance
+        - name: Install ampel
+          uses: carabiner-dev/actions/install/ampel@0ea03c7e668331be3038c6c4449e9131f142d366
+
+        - name: Evaluate Compliance
           id: osps-baseline-check
-          with:
-            subject: sha1:${{ github.sha }}
-            collector: "jsonl:attestations.jsonl"
-            #policy: "git+https://github.com/carabiner-dev/policies#sets/baseline/osps-baseline.policy.json"
-            policy: "git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline-chains.policy.json"
-            attest: true
-            fail: false
+          run: |
+            ampel verify \
+              --subject="sha1:${{ github.sha }}" \
+              --collector="jsonl:attestations.jsonl" \
+              --policy="git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline-chains.policy.json" \
+              --exit-code="false" \
+              --allow-empty-set-chain \
+              --attest-results="true" \
+              --attest-format="ampel" \
+              --results-path="ampel.intoto.json" \
+              --format="html" >> $GITHUB_STEP_SUMMARY
+
+        - name: Install bnd for signing
+          uses: carabiner-dev/actions/install/bnd@0ea03c7e668331be3038c6c4449e9131f142d366
+
+        - name: Sign compliance results
+          run: |
+            mv ampel.intoto.json ampel.intoto.json.tmp
+            bnd statement ampel.intoto.json.tmp >> ampel.intoto.json

@@ -220,8 +220,11 @@
                 -D /tmp/slsa-source
             fi
 
-        - name: Install ampel
-          uses: carabiner-dev/actions/install/ampel@0ea03c7e668331be3038c6c4449e9131f142d366
+        - name: Install ampel from fix branch
+          run: |
+            git clone --depth=1 --branch base-line-fixes \
+              https://github.com/deobieta/ampel /tmp/ampel-src
+            cd /tmp/ampel-src && go build -o /usr/local/bin/ampel ./cmd/ampel
 
         - name: Evaluate Compliance
           id: osps-baseline-check

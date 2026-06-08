@@ -63,8 +63,8 @@
         - name: Generate SBOM
           run: |
             mkdir attestations
-            unpack extract . --ignore-other-codebases --files -f spdx --attest > attestations/spdx.intoto.json
-            unpack extract . --ignore-other-codebases --files -f spdx > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
+            unpack extract . --ignore-other-codebases --files -f spdx --attest --networking=full > attestations/spdx.intoto.json
+            unpack extract . --ignore-other-codebases --files -f spdx --networking=full > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
             bnd statement attestations/spdx.intoto.json --out attestations/spdx.bundle.json
             rm -f attestations/spdx.intoto.json
        
@@ -201,6 +201,25 @@
             name: attestations.jsonl
             path: attestations.jsonl
         
+        - name: Download SLSA source provenance
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            run_id=$(gh run list \
+              --repo ${{ github.repository }} \
+              --workflow "SLSA Source" \
+              --commit ${{ github.sha }} \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId')
+            if [ -n "$run_id" ] && [ "$run_id" != "null" ]; then
+              gh run download "$run_id" \
+                --repo ${{ github.repository }} \
+                -n prov_metadata \
+                -D /tmp/slsa-source
+            fi
+
         - name: Install ampel
           uses: carabiner-dev/actions/install/ampel@0ea03c7e668331be3038c6c4449e9131f142d366
 
@@ -209,7 +228,7 @@
           run: |
             ampel verify \
               --subject="sha1:${{ github.sha }}" \
-              --collector="jsonl:attestations.jsonl" \
+              --collector="jsonl:attestations.jsonl$([ -f /tmp/slsa-source/signed_bundle.intoto.jsonl ] && echo ',jsonl:/tmp/slsa-source/signed_bundle.intoto.jsonl')" \
               --policy="git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline-chains.policy.json" \
               --exit-code="false" \
               --allow-empty-set-chain \

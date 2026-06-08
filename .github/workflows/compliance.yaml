@@ -238,7 +238,7 @@
           run: |
             git clone --depth=1 --branch base-line-fixes \
               https://github.com/deobieta/ampel /tmp/ampel-src
-            cd /tmp/ampel-src && go build -o /usr/local/bin/ampel ./cmd/ampel
+            cd /tmp/ampel-src && GOTOOLCHAIN=auto go build -o /usr/local/bin/ampel ./cmd/ampel
 
         - name: Evaluate Compliance
           id: osps-baseline-check

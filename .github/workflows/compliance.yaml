@@ -41,7 +41,7 @@
           with:
             go-version-file: go.mod
             cache: false
-  
+
         - name: Setup bnd
           uses: carabiner-dev/actions/install/bnd@0ea03c7e668331be3038c6c4449e9131f142d366
   
@@ -234,11 +234,8 @@
                 -D /tmp/slsa-source
             fi
 
-        - name: Install ampel from fix branch
-          run: |
-            git clone --depth=1 --branch base-line-fixes \
-              https://github.com/deobieta/ampel /tmp/ampel-src
-            cd /tmp/ampel-src && GOTOOLCHAIN=auto go build -o /usr/local/bin/ampel ./cmd/ampel
+        - name: Setup ampel
+          uses: carabiner-dev/actions/install/ampel@2ef404f78b366eaad14bf8963edb2d5a7095f8ba
 
         - name: Evaluate Compliance
           id: osps-baseline-check

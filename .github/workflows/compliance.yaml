@@ -78,8 +78,7 @@
           env:
              GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           run: |
-              snappy snap \
-                --spec snappy/specs/mfa.yaml \
+              snappy snap builtin:github/mfa-rest.yaml \
                 -v ORG=${{ github.event.repository.owner.login }} --attest \
                 > attestations/mfa.intoto.json
   

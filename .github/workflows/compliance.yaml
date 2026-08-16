@@ -53,6 +53,8 @@
   
         - name: Build Scorecard
           uses: carabiner-dev/actions/_demo/scorecard@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+          with:
+            install-dir: /home/runner/.carabiner
   
         - name: Setup beaker
           uses: carabiner-dev/actions/install/beaker@ade14d87ee05bd60ec9028e3f5f430ee571ac8df

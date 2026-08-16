@@ -244,7 +244,7 @@
             ampel verify \
               --subject="sha1:${{ github.sha }}" \
               --collector="jsonl:attestations.jsonl$([ -f /tmp/slsa-source/signed_bundle.intoto.jsonl ] && echo ',jsonl:/tmp/slsa-source/signed_bundle.intoto.jsonl')" \
-              --policy="git+https://github.com/carabiner-dev/policies@main#sets/baseline/osps-baseline-chains.policy.json" \
+              --policy="git+https://github.com/carabiner-dev/policies@refs/heads/main#sets/baseline/osps-baseline-chains.policy.json" \
               --exit-code="false" \
               --allow-empty-set-chain \
               --attest-results="true" \

@@ -43,22 +43,22 @@
             cache: false
 
         - name: Setup bnd
-          uses: carabiner-dev/actions/install/bnd@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/install/bnd@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
   
         - name: Setup snappy
-          uses: carabiner-dev/actions/install/snappy@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/install/snappy@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
   
         - name: Setup unpack
-          uses: carabiner-dev/actions/install/unpack@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/install/unpack@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
   
         - name: Build Scorecard
-          uses: carabiner-dev/actions/_demo/scorecard@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/_demo/scorecard@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
   
         - name: Setup beaker
-          uses: carabiner-dev/actions/install/beaker@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/install/beaker@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
   
         - name: Setup vexflow
-          uses: carabiner-dev/actions/install/vexflow@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/install/vexflow@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
   
         - name: Generate SBOM
           run: |
@@ -118,7 +118,7 @@
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             snappy snap \
-              --spec snappy/specs/repo.yaml \
+              --spec builtin:github/repo.yaml \
               -v REPO=${{ github.event.repository.name }} \
               -v ORG=${{ github.event.repository.owner.login }} --attest \
               > attestations/repo.intoto.json
@@ -242,7 +242,7 @@
             ampel verify \
               --subject="sha1:${{ github.sha }}" \
               --collector="jsonl:attestations.jsonl$([ -f /tmp/slsa-source/signed_bundle.intoto.jsonl ] && echo ',jsonl:/tmp/slsa-source/signed_bundle.intoto.jsonl')" \
-              --policy="git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline-chains.policy.json" \
+              --policy="git+https://github.com/carabiner-dev/policies@main#sets/baseline/osps-baseline-chains.policy.json" \
               --exit-code="false" \
               --allow-empty-set-chain \
               --attest-results="true" \
@@ -251,7 +251,7 @@
               --format="html" >> $GITHUB_STEP_SUMMARY
 
         - name: Install bnd for signing
-          uses: carabiner-dev/actions/install/bnd@0ea03c7e668331be3038c6c4449e9131f142d366
+          uses: carabiner-dev/actions/install/bnd@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
 
         - name: Sign compliance results
           run: |

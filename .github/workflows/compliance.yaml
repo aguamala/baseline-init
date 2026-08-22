@@ -18,6 +18,7 @@
         id-token: write # needed for keyless signing
         attestations: write # needed to push attestations
         contents: read
+        actions: read # needed to download SLSA source provenance from other workflow runs
         
       steps:
         - name: Check out code

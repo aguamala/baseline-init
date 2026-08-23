@@ -238,6 +238,9 @@
                 --repo ${{ github.repository }} \
                 -n prov_metadata \
                 -D /tmp/slsa-source
+              echo "DEBUG: downloaded files: $(ls /tmp/slsa-source/ 2>/dev/null || echo 'directory missing')"
+            else
+              echo "DEBUG: no run_id found, skipping download"
             fi
 
         - name: Setup ampel

@@ -209,15 +209,18 @@
           run: |
             # Prefer the branch-push run (source-provenance) over tag-push run (tag-provenance).
             # Tag-push runs produce tag-provenance/v1-draft which chains can't resolve.
-            run_id=$(gh run list \
+            echo "DEBUG: looking for SLSA Source run for commit ${{ github.sha }}"
+            raw=$(gh run list \
               --repo ${{ github.repository }} \
               --workflow "SLSA Source" \
               --commit ${{ github.sha }} \
               --event push \
               --status success \
               --limit 10 \
-              --json databaseId,headBranch \
-              --jq '[.[] | select(.headBranch | startswith("refs/tags/") | not)] | .[0].databaseId')
+              --json databaseId,headBranch)
+            echo "DEBUG: raw gh run list output: $raw"
+            run_id=$(echo "$raw" | jq -r '[.[] | select(.headBranch | startswith("refs/tags/") | not)] | .[0].databaseId')
+            echo "DEBUG: run_id=$run_id"
             if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
               # Fall back to any successful run for this commit
               run_id=$(gh run list \
@@ -228,6 +231,7 @@
                 --limit 1 \
                 --json databaseId \
                 --jq '.[0].databaseId')
+              echo "DEBUG: fallback run_id=$run_id"
             fi
             if [ -n "$run_id" ] && [ "$run_id" != "null" ]; then
               gh run download "$run_id" \

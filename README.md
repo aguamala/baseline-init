@@ -286,3 +286,6 @@ Built with:
 - [yaml.v3](https://gopkg.in/yaml.v3) - YAML parsing
 
 Based on the [OpenSSF Security Baseline](https://github.com/ossf/security-baseline) and [Security Insights](https://github.com/ossf/security-insights-spec) projects.
+
+[![OSPS Baseline](https://img.shields.io/badge/OSPS-Baseline-green)](https://baseline.openssf.org/)
+

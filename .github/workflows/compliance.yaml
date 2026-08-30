@@ -29,7 +29,14 @@
             fetch-depth: 0
 
         - name: Fetch tags
-          run: git fetch --tags --force
+          run: |
+            git fetch --tags --force
+            echo "=== tags ==="
+            git tag | head -10
+            echo "=== git describe ==="
+            git describe --tags --abbrev=0 || echo "DESCRIBE FAILED"
+            echo "=== HEAD ==="
+            git log --oneline -3
 
         # - name: Install Tejolote
         #   uses: kubernetes-sigs/release-actions/setup-tejolote@8af7b2a5596dff526de9db59b2c4b8457e9f52a1 # v0.4.0

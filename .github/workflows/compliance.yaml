@@ -29,7 +29,15 @@
             fetch-depth: 0
 
         - name: Fetch tags
-          run: git fetch --tags --force origin main
+          run: |
+            git fetch origin main --tags
+            # unpack uses go-git's repo.Log() which only walks commits reachable from HEAD.
+            # Tags on main commits not in this branch's ancestry cause "tag not found in history".
+            # Fix: force-move the latest tag to HEAD so go-git finds it in the reachable graph.
+            LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
+            if [ -n "$LATEST_TAG" ]; then
+              git tag -f "$LATEST_TAG" HEAD
+            fi
 
         # - name: Install Tejolote
         #   uses: kubernetes-sigs/release-actions/setup-tejolote@8af7b2a5596dff526de9db59b2c4b8457e9f52a1 # v0.4.0

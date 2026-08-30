@@ -2,6 +2,8 @@
 
 A command-line tool for OpenSSF Baseline compliance checking and setup.
 
+<!-- compliance: carabiner-labs/baseline-init -->
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aguamala/baseline-init)](https://goreportcard.com/report/github.com/aguamala/baseline-init)
 

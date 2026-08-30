@@ -2,240 +2,260 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-name: OSPS Compliance
+  name: OSPS Compliance
+  
+  on:
+    push:
+    workflow_dispatch:
+  
+  permissions: {}
+  
+  jobs:
+    attest:
+      runs-on: ubuntu-latest
+  
+      permissions:
+        id-token: write # needed for keyless signing
+        attestations: write # needed to push attestations
+        contents: read
+        actions: read # needed to download SLSA source provenance from other workflow runs
+        
+      steps:
+        - name: Check out code
+          uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+          with:
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
+            persist-credentials: false
+            fetch-depth: 0
 
-on:
-  push:
-  workflow_dispatch:
+        - name: Fetch tags
+          run: |
+            git fetch origin main --tags
+            # unpack uses go-git's repo.Log() which only walks commits reachable from HEAD.
+            # Tags on main commits not in this branch's ancestry cause "tag not found in history".
+            # Fix: force-move the latest tag to HEAD so go-git finds it in the reachable graph.
+            LATEST_TAG=$(git tag --sort=-version:refname | head -n1)
+            if [ -n "$LATEST_TAG" ]; then
+              git tag -f "$LATEST_TAG" HEAD
+            fi
 
-permissions: {}
+        # - name: Install Tejolote
+        #   uses: kubernetes-sigs/release-actions/setup-tejolote@8af7b2a5596dff526de9db59b2c4b8457e9f52a1 # v0.4.0
+  
+        - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+          with:
+            go-version-file: go.mod
+            cache: false
 
-jobs:
-  attest:
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write # needed for keyless signing
-      attestations: write # needed to push attestations
-      contents: read
-      
-    steps:
-      - name: Check out code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-        with:
-          persist-credentials: false
-      
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.SNAPPY_APP_ID }}
-          private-key: ${{ secrets.SNAPPY_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      # - name: Install Tejolote
-      #   uses: kubernetes-sigs/release-actions/setup-tejolote@8af7b2a5596dff526de9db59b2c4b8457e9f52a1 # v0.4.0
-
-      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
-        with:
-          go-version-file: go.mod
-          cache: false
-
-      - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@0ea03c7e668331be3038c6c4449e9131f142d366
-
-      - name: Setup snappy
-        uses: carabiner-dev/actions/install/snappy@0ea03c7e668331be3038c6c4449e9131f142d366
-
-      - name: Setup unpack
-        uses: carabiner-dev/actions/install/unpack@0ea03c7e668331be3038c6c4449e9131f142d366
-
-      # - name: Build Scorecard
-      #   uses: carabiner-dev/actions/_demo/scorecard@0ea03c7e668331be3038c6c4449e9131f142d366
-
-      # - name: Setup beaker
-      #   uses: carabiner-dev/actions/install/beaker@0ea03c7e668331be3038c6c4449e9131f142d366
-
-      # - name: Setup vexflow
-      #   uses: carabiner-dev/actions/install/vexflow@0ea03c7e668331be3038c6c4449e9131f142d366
-
-      - name: Generate SBOM
-        run: |
-          mkdir attestations
-          unpack extract . --ignore-other-codebases -f spdx --attest > attestations/spdx.intoto.json
-          unpack extract . --ignore-other-codebases -f spdx > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
-          bnd statement attestations/spdx.intoto.json --out attestations/spdx.bundle.json
-          rm -f attestations/spdx.intoto.json
-     
-      - name: Attest Security Insights / OpenEoX
-        id: attest-si-openeox
-        # bnd commit --predicate-git-path=.openeox.json --type="https://docs.oasis-open.org/openeox/core/v1.0" --repo . > attestations/openeox.bundle.json
-        run: |
-          bnd commit --predicate-git-path=SECURITY-INSIGHTS.yml --type=https://github.com/ossf/security-insights-spec --yaml --repo . > attestations/si.bundle.json
-          
-      - name: Generate MFA attestation
-        env:
-           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-            snappy snap \
-              --spec snappy/specs/mfa.yaml \
-              -v ORG=${{ github.event.repository.owner.login }} \
-              -v COMMIT=${{ github.sha }} \
+        - name: Setup bnd
+          uses: carabiner-dev/actions/install/bnd@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+  
+        - name: Setup snappy
+          uses: carabiner-dev/actions/install/snappy@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+  
+        - name: Setup unpack
+          uses: carabiner-dev/actions/install/unpack@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+  
+        - name: Build Scorecard
+          uses: carabiner-dev/actions/_demo/scorecard@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+          with:
+            install-dir: /home/runner/.carabiner
+  
+        - name: Setup beaker
+          uses: carabiner-dev/actions/install/beaker@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+  
+        - name: Setup vexflow
+          uses: carabiner-dev/actions/install/vexflow@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
+  
+        - name: Generate SBOM
+          run: |
+            mkdir attestations
+            unpack extract . --ignore-other-codebases --files -f spdx --attest --networking=full > attestations/spdx.intoto.json
+            unpack extract . --ignore-other-codebases --files -f spdx --networking=full > attestations/${{ github.event.repository.name }}-${{ steps.tag.outputs.TAG }}.spdx.json
+            bnd statement attestations/spdx.intoto.json --out attestations/spdx.bundle.json
+            rm -f attestations/spdx.intoto.json
+       
+        - name: Attest Security Insights / OpenEoX
+          id: attest-si-openeox
+          run: |
+            bnd commit --predicate-git-path=.openeox.json --type="https://docs.oasis-open.org/openeox/core/v1.0" --repo . > attestations/openeox.bundle.json
+            bnd commit --predicate-git-path=SECURITY-INSIGHTS.yml --type=https://github.com/ossf/security-insights-spec --yaml --repo . > attestations/si.bundle.json
+            
+        - if: github.event.organization.login != ''
+          name: Generate org attestation
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            snappy snap builtin:github/org.yaml \
+              -v ORG=${{ github.event.organization.login }} --attest \
+              > attestations/org.intoto.json
+            
+            bnd statement attestations/org.intoto.json --out attestations/org.bundle.json
+            rm -f attestations/org.intoto.json
+          id: attest-org
+  
+        - name: Generate branch rules attestation
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            snappy snap builtin:github/branch-rules.yaml \
+              -v BRANCH=main \
               -v REPO=${{ github.event.repository.name }} \
-              > attestations/mfa.predicate.json
+              -v ORG=${{ github.event.repository.owner.login }} --attest \
+              > attestations/branch.intoto.json
+            
+            bnd statement attestations/branch.intoto.json --out attestations/branch.bundle.json
+            rm -f attestations/branch.intoto.json
+          id: attest-branch
+  
+        - name: Generate repository attestation
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            snappy snap \
+              --spec builtin:github/repo.yaml \
+              -v REPO=${{ github.event.repository.name }} \
+              -v ORG=${{ github.event.repository.owner.login }} --attest \
+              > attestations/repo.intoto.json
+            
+            bnd statement attestations/repo.intoto.json --out attestations/repo.bundle.json
+            rm -f attestations/repo.intoto.json
+          id: attest-repo
+  
+        - name: "Generate Scorecard Attestation"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            scorecard \
+              --repo=${{ github.repository }} \
+              --format=intoto \
+              --commit=${{ github.sha }} \
+              > attestations/scorecard.intoto.json
+  
+            bnd statement attestations/scorecard.intoto.json --out attestations/scorecard.bundle.json
+            rm -f attestations/scorecard.intoto.json
+  
+        - name: Attest tests
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            beaker run . \
+              --attest \
+              -o attestations/tests.intoto.json
+  
+            bnd statement \
+              attestations/tests.intoto.json \
+              --out attestations/tests.bundle.json
+  
+            rm -f attestations/tests.intoto.json
+          id: attest-tests
+  
+        - name: "Run scanner"
+          uses: google/osv-scanner-action/osv-scanner-action@b77c075a1235514558f0eb88dbd31e22c45e0cd2 # v2.3.0
+          continue-on-error: true
+          with:
+            scan-args: |-
+              --output=attestations/osv-results.json
+              --format=json
+              .
+  
+        - name: "Attest VEX and OSV results"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            vexflow assemble \
+              --repo carabiner-labs/baseline-init \
+              --branch main \
+              --product "sha1:${{ github.sha }}" \
+              > attestations/openvex.json
 
-            bnd commit \
-              --repo=https://github.com/${{ github.repository }} \
-              --sha=${{ github.sha }} \
-              --predicate=attestations/mfa.predicate.json \
-              --type="http://github.com/carabiner-dev/snappy/specs/mfa.yaml" \
-              --out=attestations/mfa.bundle.json
+            bnd predicate \
+              attestations/openvex.json \
+              --subject="sha1:${{ github.sha }}" \
+              --out attestations/openvex.bundle.json \
+              --type="https://openvex.dev/ns/v0.2.0"
 
-            rm -f attestations/mfa.predicate.json
-        id: attest-mfa 
+            bnd predicate \
+              attestations/osv-results.json \
+              --subject="sha1:${{ github.sha }}" \
+              --out attestations/osv-results.bundle.json \
+              --type="https://ossf.github.io/osv-schema/results@v1.6.7"
 
-      - if: github.event.organization.login != ''
-        name: Generate org attestation
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          snappy snap builtin:github/org.yaml \
-            -v BRANCH=main \
-            -v REPO=${{ github.event.repository.name }} \
-            -v ORG=${{ github.event.organization.login }} \
-            > attestations/org.predicate.json
-          
-          bnd commit \
-            --repo=https://github.com/${{ github.repository }} \
-            --sha=${{ github.sha }} \
-            --predicate=attestations/org.predicate.json \
-            --type="http://github.com/carabiner-dev/snappy/specs/org.yaml" \
-            --out=attestations/org.bundle.json
+            rm -f attestations/osv-results.json attestations/openvex.json
+  
+        - name: Pack Attestations
+          id: pack-attestations
+          run: |
+            bnd pack attestations/ > attestations.jsonl
+  
+        # Publish attestations to artifacts
+        - name: Archive production artifacts
+          uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+          with:
+            name: attestations.jsonl
+            path: attestations.jsonl
+        
+        - name: Download SLSA source provenance
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            # Prefer the branch-push run (source-provenance) over tag-push run (tag-provenance).
+            # Tag-push runs produce tag-provenance/v1-draft which chains can't resolve.
+            echo "DEBUG: looking for SLSA Source run for commit ${{ github.sha }}"
+            raw=$(gh run list \
+              --repo ${{ github.repository }} \
+              --workflow "SLSA Source" \
+              --commit ${{ github.sha }} \
+              --event push \
+              --status success \
+              --limit 10 \
+              --json databaseId,headBranch)
+            echo "DEBUG: raw gh run list output: $raw"
+            run_id=$(echo "$raw" | jq -r '[.[] | select(.headBranch | startswith("refs/tags/") | not)] | .[0].databaseId')
+            echo "DEBUG: run_id=$run_id"
+            if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+              # Fall back to any successful run for this commit
+              run_id=$(gh run list \
+                --repo ${{ github.repository }} \
+                --workflow "SLSA Source" \
+                --commit ${{ github.sha }} \
+                --status success \
+                --limit 1 \
+                --json databaseId \
+                --jq '.[0].databaseId')
+              echo "DEBUG: fallback run_id=$run_id"
+            fi
+            if [ -n "$run_id" ] && [ "$run_id" != "null" ]; then
+              gh run download "$run_id" \
+                --repo ${{ github.repository }} \
+                -n prov_metadata \
+                -D /tmp/slsa-source
+              echo "DEBUG: downloaded files: $(ls /tmp/slsa-source/ 2>/dev/null || echo 'directory missing')"
+            else
+              echo "DEBUG: no run_id found, skipping download"
+            fi
 
-          rm -f attestations/org.predicate.json
-        id: attest-org
+        - name: Setup ampel
+          uses: carabiner-dev/actions/install/ampel@2ef404f78b366eaad14bf8963edb2d5a7095f8ba
 
-      - name: Generate branch rules attestation
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          snappy snap builtin:github/branch-rules.yaml \
-            -v BRANCH=main \
-            -v REPO=${{ github.event.repository.name }} \
-            -v ORG=${{ github.event.repository.owner.login }} \
-            > attestations/branch.predicate.json
-          
-          bnd commit \
-            --repo=https://github.com/${{ github.repository }} \
-            --sha=${{ github.sha }} \
-            --predicate=attestations/branch.predicate.json \
-            --type="http://github.com/carabiner-dev/snappy/specs/branch-rules.yaml" \
-            --out=attestations/branch.bundle.json
+        - name: Evaluate Compliance
+          id: osps-baseline-check
+          run: |
+            ampel verify \
+              --subject="sha1:${{ github.sha }}" \
+              --collector="jsonl:attestations.jsonl$([ -f /tmp/slsa-source/signed_bundle.intoto.jsonl ] && echo ',jsonl:/tmp/slsa-source/signed_bundle.intoto.jsonl')" \
+              --policy="git+https://github.com/deobieta/policies@refs/heads/feat/osps-baseline-chains#sets/baseline/osps-baseline.policy.json" \
+              --exit-code="false" \
+              --allow-empty-set-chain \
+              --attest-results="true" \
+              --attest-format="ampel" \
+              --results-path="ampel.intoto.json" \
+              --format="html" >> $GITHUB_STEP_SUMMARY
 
-          rm -f attestations/branch.predicate.json
-        id: attest-branch
+        - name: Install bnd for signing
+          uses: carabiner-dev/actions/install/bnd@ade14d87ee05bd60ec9028e3f5f430ee571ac8df
 
-      - name: Generate repository attestation
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          snappy snap builtin:github/repo.yaml \
-            -v BRANCH=main \
-            -v REPO=${{ github.event.repository.name }} \
-            -v ORG=${{ github.event.repository.owner.login }} \
-            > attestations/repo.predicate.json
-
-          bnd commit \
-            --repo=https://github.com/${{ github.repository }} \
-            --sha=${{ github.sha }} \
-            --predicate=attestations/repo.predicate.json \
-            --type="http://github.com/carabiner-dev/snappy/specs/repo.yaml" \
-            --out=attestations/repo.bundle.json
-
-          rm -f attestations/repo.predicate.json
-        id: attest-repo
-
-      # - name: "Generate Scorecard Attestation"
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     scorecard \
-      #       --repo=carabiner-dev/demo-repo \
-      #       --format=intoto \
-      #       > attestations/scorecard.intoto.json
-
-      #     bnd statement \
-      #       attestations/scorecard.intoto.json \
-      #       --out attestations/scorecard.bundle.json
-
-      #     rm -f attestations/scorecard.intoto.json
-
-      # - name: Attest tests
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     beaker run . \
-      #       --attest \
-      #       -o attestations/tests.intoto.json
-
-      #     bnd statement \
-      #       attestations/tests.intoto.json \
-      #       --out attestations/tests.bundle.json
-
-      #     rm -f attestations/tests.intoto.json
-      #   id: attest-tests
-
-      # - name: "Run scanner"
-      #   uses: google/osv-scanner-action/osv-scanner-action@b77c075a1235514558f0eb88dbd31e22c45e0cd2 # v2.3.0
-      #   continue-on-error: true
-      #   with:
-      #     scan-args: |-
-      #       --output=attestations/osv-results.json
-      #       --format=json
-      #       .
-
-      # - name: "Assemble VEX and attest OSV results"
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     vexflow assemble \
-      #       --repo=${{ github.repository }} \
-      #       --triage-repo=${{ github.event.repository.owner.login }}/.vexflow \
-      #       > attestations/main.openvex.json
-
-      #     bnd predicate \
-      #       attestations/main.openvex.json \
-      #       --subject=sha1:${{ github.sha }} \
-      #       --out attestations/openvex.bundle.json \
-      #       --type="https://openvex.dev/ns/v0.2.0"
-
-      #     bnd predicate \
-      #       attestations/osv-results.json \
-      #       --subject=sha1:${{ github.sha }} \
-      #       --out attestations/osv-results.bundle.json \
-      #       --type="https://ossf.github.io/osv-schema/results@v1.6.7"
-
-      #     rm -f attestations/osv-results.json attestations/main.openvex.json
-
-      - name: Pack Attestations
-        id: pack-attestations
-        run: |
-          bnd pack attestations/ > attestations.jsonl
-
-      # Publish attestations to artifacts
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: attestations.jsonl
-          path: attestations.jsonl
-      
-      - uses: carabiner-dev/actions/ampel/verify@0ea03c7e668331be3038c6c4449e9131f142d366
-        name: Evaluate Compliance
-        id: osps-baseline-check
-        with:
-          subject: sha1:${{ github.sha }}
-          collector: "jsonl:attestations.jsonl"
-          #policy: "git+https://github.com/carabiner-dev/policies#sets/baseline/osps-baseline.policy.json"
-          policy: "git+https://github.com/deobieta/policies@refs/heads/new-baseline#sets/baseline/osps-baseline.policy.json"
-          attest: true
-          fail: false
+        - name: Sign compliance results
+          run: |
+            mv ampel.intoto.json ampel.intoto.json.tmp
+            bnd statement ampel.intoto.json.tmp >> ampel.intoto.json

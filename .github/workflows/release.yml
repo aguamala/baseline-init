@@ -1,0 +1,108 @@
+# Copyright 2025 The Carabiner Authors
+# SPDX-License-Identifier: Apache-2.0
+---
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write   # keyless signing via Sigstore
+      contents: write   # create GitHub release
+      attestations: write
+
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Setup bnd
+        uses: carabiner-dev/actions/install/bnd@0ea03c7e668331be3038c6c4449e9131f142d366
+
+      - name: Build release binaries
+        run: |
+          mkdir dist
+          GOOS=linux  GOARCH=amd64 go build -o dist/baseline-init-linux-amd64  .
+          GOOS=darwin GOARCH=arm64 go build -o dist/baseline-init-darwin-arm64 .
+
+      - name: Compute artifact hashes
+        id: hash
+        run: |
+          cd dist
+          echo "hashes=$(sha256sum * | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SLSA build provenance
+        run: |
+          jq -n \
+            --arg repo    "${{ github.repository }}" \
+            --arg ref     "${{ github.ref }}" \
+            --arg sha     "${{ github.sha }}" \
+            --arg run_id  "${{ github.run_id }}" \
+            '{
+              buildDefinition: {
+                buildType: ("https://github.com/" + $repo + "/.github/workflows/release.yml"),
+                externalParameters: {ref: $ref, sha: $sha},
+                resolvedDependencies: [{
+                  uri: ("git+https://github.com/" + $repo + "@" + $ref),
+                  digest: {gitCommit: $sha}
+                }]
+              },
+              runDetails: {
+                builder: {
+                  id: ("https://github.com/" + $repo + "/.github/workflows/release.yml@" + $ref)
+                },
+                metadata: {
+                  invocationId: ("https://github.com/" + $repo + "/actions/runs/" + $run_id)
+                }
+              }
+            }' > slsa-predicate.json
+
+          bnd predicate slsa-predicate.json \
+            --subject="sha1:${{ github.sha }}" \
+            --type="https://slsa.dev/provenance/v1" \
+            --out slsa-commit.bundle.json
+
+          bnd pack slsa-commit.bundle.json > slsa-attestations.jsonl
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            slsa-attestations.jsonl
+
+      - name: Upload SLSA attestations artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: slsa-attestations.jsonl
+          path: slsa-attestations.jsonl
+
+  # Binary-level SLSA v1 provenance via slsa-github-generator.
+  # Subject here is sha256 of each binary — use slsa-verifier to verify the binaries.
+  provenance:
+    needs: release
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: ${{ needs.release.outputs.hashes }}

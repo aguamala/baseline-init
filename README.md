@@ -2,6 +2,8 @@
 
 A command-line tool for OpenSSF Baseline compliance checking and setup.
 
+Maintained by [Carabiner Systems](https://carabiner.dev).
+
 [![OSPS Baseline](https://img.shields.io/badge/OSPS-Baseline-green)](https://baseline.openssf.org/)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)

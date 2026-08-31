@@ -21,6 +21,14 @@ project:
   vulnerability-reporting:
     reports-accepted: true
     bug-bounty-available: false
+    contact:
+      - name: deobieta
+        email: deobieta@gmail.com
+        primary: true
+  repositories: []
+  documentation:
+    detailed-guide: "https://github.com/aguamala/baseline-init/blob/main/README.md"
+    signature-verification: "https://github.com/aguamala/baseline-init/blob/main/README.md#verifying-signatures"
 
 repository:
   url: https://github.com/aguamala/baseline-init
@@ -36,6 +44,8 @@ repository:
   license:
     url: https://github.com/aguamala/baseline-init/blob/main/LICENSE
     expression: Apache-2.0
+  documentation:
+    dependency-management-policy: "https://github.com/aguamala/baseline-init/blob/main/SECURITY.md"
   security:
     assessments:
       self:

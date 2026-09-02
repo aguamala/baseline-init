@@ -225,6 +225,8 @@
 
         - name: Setup ampel
           uses: carabiner-dev/actions/install/ampel@2ef404f78b366eaad14bf8963edb2d5a7095f8ba
+          with:
+            version: v1.3.7
 
         - name: Evaluate Compliance
           id: osps-baseline-check
